@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Theos
+        run: |
+          brew install ldid make
+          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
+          git clone --depth=1 --recursive --shallow-submodules https://github.com/theos/theos.git ~/theos
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Publish release
+        run: gh release create "$GITHUB_REF_NAME" AgeFix.dylib --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
